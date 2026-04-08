@@ -41,7 +41,7 @@ export default function MainPage() {
           <h1 className="text-3xl font-bold tracking-tight">
             브랜딩 &amp; 링크 허브
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-muted">
             모든 공식 링크와 연락처를 한 곳에서 관리합니다.
           </p>
         </div>
@@ -85,10 +85,13 @@ export default function MainPage() {
               <img
                 src={state.profile.avatar}
                 alt="avatar"
-                className="h-24 w-24 rounded-2xl object-cover ring-2 ring-brand-cyan/40"
+                className="h-24 w-24 rounded-2xl object-cover ring-2 ring-[var(--primary)]"
               />
             ) : (
-              <div className="grid h-24 w-24 place-items-center rounded-2xl bg-gradient-to-br from-brand-cyan to-brand-accent text-2xl font-bold text-brand-navy">
+              <div
+                className="grid h-24 w-24 place-items-center rounded-2xl text-2xl font-bold text-white"
+                style={{ background: "linear-gradient(135deg, var(--primary), var(--accent))" }}
+              >
                 {state.profile.name.slice(0, 2)}
               </div>
             )}
@@ -129,7 +132,7 @@ export default function MainPage() {
             ) : (
               <>
                 <h2 className="text-3xl font-bold">{state.profile.name}</h2>
-                <p className="text-slate-400">{state.profile.tagline}</p>
+                <p className="text-muted">{state.profile.tagline}</p>
               </>
             )}
           </div>
@@ -226,7 +229,7 @@ export default function MainPage() {
       <section>
         <div className="mb-4">
           <h3 className="section-title">Footer Info</h3>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted">
             각 항목 클릭 시 클립보드로 복사됩니다.
           </p>
         </div>
@@ -255,7 +258,7 @@ export default function MainPage() {
                 />
               ) : (
                 <button
-                  className="w-full truncate rounded-lg bg-white/5 px-3 py-2 text-left text-sm hover:bg-white/10"
+                  className="w-full truncate rounded-lg bg-surface px-3 py-2 text-left text-sm hover:bg-surface-2"
                   onClick={() => copy(state.footer[f.key])}
                   title="클릭하여 복사"
                 >
@@ -320,11 +323,11 @@ function LinkCard({
       <div className="text-2xl">{item.icon || "🔗"}</div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold">{item.label}</div>
-        <div className="truncate text-xs text-slate-400">
+        <div className="truncate text-xs text-muted">
           {item.url || "링크 없음"}
         </div>
       </div>
-      <div className="text-slate-500">→</div>
+      <div className="text-muted">→</div>
     </a>
   );
 }
@@ -369,14 +372,14 @@ function SocialCard({
       className="card flex items-center justify-between p-4"
     >
       <div>
-        <div className="text-xs uppercase tracking-wider text-brand-cyan">
+        <div className="text-xs uppercase tracking-wider text-[var(--primary)]">
           {item.platform}
         </div>
-        <div className="mt-1 truncate text-sm text-slate-300">
+        <div className="mt-1 truncate text-sm text-fg">
           {item.url || "링크 없음"}
         </div>
       </div>
-      <div className="text-slate-500">→</div>
+      <div className="text-muted">→</div>
     </a>
   );
 }

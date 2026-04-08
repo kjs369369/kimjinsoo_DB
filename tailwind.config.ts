@@ -9,23 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          navy: "#0b1020",
-          ink: "#0f172a",
-          cyan: "#22d3ee",
-          cyan2: "#06b6d4",
-          accent: "#818cf8",
-        },
+        bg: "var(--bg)",
+        surface: "var(--surface)",
+        "surface-2": "var(--surface-2)",
+        primary: "var(--primary)",
+        accent: "var(--accent)",
+        fg: "var(--fg)",
+        muted: "var(--muted)",
+        border: "var(--border)",
+        danger: "var(--danger)",
       },
       fontFamily: {
         sans: ["Pretendard", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(34,211,238,0.2), 0 10px 40px -10px rgba(34,211,238,0.35)",
-      },
-      backgroundImage: {
-        "grid-fade":
-          "radial-gradient(circle at 50% 0%, rgba(34,211,238,0.15), transparent 60%)",
+        glow: "0 0 0 1px var(--primary), 0 12px 40px -12px var(--accent)",
       },
     },
   },

@@ -97,7 +97,7 @@ export default function ProgramsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">프로그램 아카이브</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-muted">
             제작한 웹페이지 · 프로그램을 누적 기록합니다. ({state.programs.length}개)
           </p>
         </div>
@@ -127,8 +127,8 @@ export default function ProgramsPage() {
                 onClick={() => setFilter(c)}
                 className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
                   active
-                    ? "border-brand-cyan bg-brand-cyan/10 text-brand-cyan"
-                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
+                    ? "border-[var(--primary)] bg-[color-mix(in_srgb,var(--primary)_15%,transparent)] text-[var(--primary)]"
+                    : "border-[var(--border)] bg-surface text-muted hover:border-[var(--primary)] hover:text-fg"
                 }`}
               >
                 {label}
@@ -148,10 +148,10 @@ export default function ProgramsPage() {
       {filtered.length === 0 ? (
         <div className="card grid place-items-center p-16 text-center">
           <div className="text-5xl">📦</div>
-          <p className="mt-4 text-sm text-slate-400">
+          <p className="mt-4 text-sm text-muted">
             아직 기록된 프로그램이 없습니다.
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted">
             우측 상단 &quot;+ 새 프로그램&quot;으로 추가하세요.
           </p>
         </div>
@@ -222,7 +222,7 @@ function ProgramCard({
               {cat.label.slice(0, 2)}
             </div>
           )}
-          <div className="absolute left-3 top-3 rounded-md bg-black/50 px-2 py-1 text-[10px] font-semibold backdrop-blur">
+          <div className="absolute left-3 top-3 rounded-md bg-[rgba(0,0,0,0.6)] px-2 py-1 text-[10px] font-semibold text-white backdrop-blur">
             {cat.label}
           </div>
           <div
@@ -233,7 +233,7 @@ function ProgramCard({
         </div>
         <div className="p-4">
           <h3 className="truncate text-base font-semibold">{program.name}</h3>
-          <p className="mt-1 line-clamp-2 text-xs text-slate-400">
+          <p className="mt-1 line-clamp-2 text-xs text-muted">
             {program.description || "설명 없음"}
           </p>
           <div className="mt-3 flex flex-wrap gap-1">
@@ -245,10 +245,10 @@ function ProgramCard({
           </div>
         </div>
       </button>
-      <div className="flex items-center justify-between border-t border-white/5 px-4 py-2 text-[11px] text-slate-500">
+      <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-2 text-[11px] text-muted">
         <span>{program.createdAt}</span>
         <button
-          className="text-slate-400 hover:text-brand-cyan"
+          className="text-muted hover:text-[var(--primary)] transition"
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
@@ -281,11 +281,11 @@ function ProgramFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,0.6)] p-4 backdrop-blur-sm">
       <div className="card max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">프로그램 {initial.name ? "편집" : "추가"}</h2>
-          <button className="text-slate-400 hover:text-white" onClick={onCancel}>
+          <button className="text-muted hover:text-fg" onClick={onCancel}>
             ✕
           </button>
         </div>
@@ -309,7 +309,7 @@ function ProgramFormModal({
                 }
               >
                 {Object.entries(CATEGORY_META).map(([k, v]) => (
-                  <option key={k} value={k} className="bg-brand-navy">
+                  <option key={k} value={k} className="bg-bg">
                     {v.label}
                   </option>
                 ))}
@@ -325,7 +325,7 @@ function ProgramFormModal({
                 }
               >
                 {Object.entries(STATUS_META).map(([k, v]) => (
-                  <option key={k} value={k} className="bg-brand-navy">
+                  <option key={k} value={k} className="bg-bg">
                     {v.label}
                   </option>
                 ))}
@@ -403,7 +403,7 @@ function ProgramFormModal({
                 {p.tags.map((t) => (
                   <button
                     key={t}
-                    className="chip hover:border-red-400/40 hover:text-red-300"
+                    className="chip hover:border-[var(--danger)] hover:text-[var(--danger)]"
                     onClick={() =>
                       setP({ ...p, tags: p.tags.filter((x) => x !== t) })
                     }
@@ -453,7 +453,7 @@ function ViewModal({
   const cat = CATEGORY_META[program.category];
   const st = STATUS_META[program.status];
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,0.6)] p-4 backdrop-blur-sm">
       <div className="card max-h-[90vh] w-full max-w-2xl overflow-y-auto">
         {program.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -473,23 +473,23 @@ function ViewModal({
           <div className="mb-3 flex items-center gap-2">
             <span className="chip">{cat.label}</span>
             <span className={`chip ${st.color}`}>{st.label}</span>
-            <span className="ml-auto text-xs text-slate-500">
+            <span className="ml-auto text-xs text-muted">
               {program.createdAt}
             </span>
           </div>
           <h2 className="text-2xl font-bold">{program.name}</h2>
           {program.description && (
-            <p className="mt-2 text-sm text-slate-300">{program.description}</p>
+            <p className="mt-2 text-sm text-fg">{program.description}</p>
           )}
           <div className="mt-4 space-y-2 text-sm">
             {program.url && (
               <div className="flex items-center gap-2">
-                <span className="w-16 text-xs text-slate-500">URL</span>
+                <span className="w-16 text-xs text-muted">URL</span>
                 <a
                   href={program.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="truncate text-brand-cyan hover:underline"
+                  className="truncate text-[var(--primary)] hover:underline"
                 >
                   {program.url}
                 </a>
@@ -497,12 +497,12 @@ function ViewModal({
             )}
             {program.github && (
               <div className="flex items-center gap-2">
-                <span className="w-16 text-xs text-slate-500">GitHub</span>
+                <span className="w-16 text-xs text-muted">GitHub</span>
                 <a
                   href={program.github}
                   target="_blank"
                   rel="noreferrer"
-                  className="truncate text-brand-cyan hover:underline"
+                  className="truncate text-[var(--primary)] hover:underline"
                 >
                   {program.github}
                 </a>
@@ -519,7 +519,7 @@ function ViewModal({
             </div>
           )}
           {program.note && (
-            <div className="mt-4 rounded-lg border border-white/5 bg-white/5 p-3 text-sm text-slate-300 whitespace-pre-wrap">
+            <div className="mt-4 rounded-lg border border-[var(--border)] bg-surface p-3 text-sm text-fg whitespace-pre-wrap">
               {program.note}
             </div>
           )}

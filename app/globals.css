@@ -2,51 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme (default values) */
+:root {
+  --bg: #ffffff;
+  --surface: #f5f5f5;
+  --surface-2: #ebebeb;
+  --primary: #0048ba;
+  --accent: #002072;
+  --fg: #000000;
+  --muted: #555555;
+  --border: rgba(0, 0, 0, 0.12);
+  --danger: #ff0000;
+}
+
+/* Dark theme overrides */
+.dark {
+  --bg: #000000;
+  --surface: #111111;
+  --surface-2: #1a1a1a;
+  --primary: #0048ba;
+  --accent: #307bff;
+  --fg: #ffffff;
+  --muted: #aaaaaa;
+  --border: rgba(255, 255, 255, 0.12);
+  --danger: #ff0000;
+}
+
 @layer base {
   html {
     font-family: Pretendard, system-ui, -apple-system, "Segoe UI", Roboto,
       "Helvetica Neue", Arial, sans-serif;
   }
   body {
-    @apply bg-brand-navy text-slate-100 antialiased;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34, 211, 238, 0.15), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 80% 110%, rgba(129, 140, 248, 0.12), transparent 60%);
-    background-attachment: fixed;
+    background-color: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm
-      transition hover:border-brand-cyan/40 hover:shadow-glow;
+    @apply rounded-2xl border bg-surface transition
+      hover:border-[var(--accent)] hover:shadow-glow;
+    border-color: var(--border);
   }
   .btn {
     @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
       transition active:scale-[0.98];
   }
   .btn-primary {
-    @apply btn bg-gradient-to-r from-brand-cyan2 to-brand-accent text-white
-      hover:opacity-90;
+    @apply btn text-white;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
   }
   .btn-ghost {
-    @apply btn border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10;
+    @apply btn border bg-surface text-fg;
+    border-color: var(--border);
+  }
+  .btn-ghost:hover {
+    background-color: var(--surface-2);
   }
   .btn-danger {
-    @apply btn border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20;
+    @apply btn border text-[var(--danger)];
+    border-color: var(--danger);
+    background-color: color-mix(in srgb, var(--danger) 10%, transparent);
+  }
+  .btn-danger:hover {
+    background-color: color-mix(in srgb, var(--danger) 18%, transparent);
   }
   .input {
-    @apply w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm
-      text-slate-100 placeholder:text-slate-500 focus:border-brand-cyan focus:outline-none;
+    @apply w-full rounded-lg border bg-surface px-3 py-2 text-sm text-fg
+      placeholder:text-muted focus:outline-none;
+    border-color: var(--border);
+  }
+  .input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
   }
   .label {
-    @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400;
+    @apply mb-1 block text-xs font-medium uppercase tracking-wide text-muted;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5
-      px-2.5 py-1 text-xs text-slate-300;
+    @apply inline-flex items-center gap-1 rounded-full border bg-surface
+      px-2.5 py-1 text-xs text-fg;
+    border-color: var(--border);
   }
   .section-title {
-    @apply text-xs font-semibold uppercase tracking-[0.2em] text-brand-cyan;
+    @apply text-xs font-semibold uppercase tracking-[0.2em];
+    color: var(--primary);
+  }
+  .divider {
+    border-color: var(--border);
   }
 }

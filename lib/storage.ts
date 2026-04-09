@@ -21,6 +21,8 @@ export const DEFAULT_STATE: DbState = {
     { id: "s4", platform: "카카오채널", url: "" },
     { id: "s5", platform: "GitHub", url: "https://github.com/kjs369369" },
   ],
+  workLinks: [],
+  partners: [],
   footer: {
     phone: "010-0000-0000",
     email: "contact@aiclab.kr",

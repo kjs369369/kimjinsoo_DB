@@ -9,6 +9,7 @@
   --surface-2: #ebebeb;
   --primary: #0048ba;
   --accent: #002072;
+  --point: #ff2a2a;
   --fg: #000000;
   --muted: #555555;
   --border: rgba(0, 0, 0, 0.12);
@@ -22,6 +23,7 @@
   --surface-2: #1a1a1a;
   --primary: #0048ba;
   --accent: #307bff;
+  --point: #ff3131;
   --fg: #ffffff;
   --muted: #aaaaaa;
   --border: rgba(255, 255, 255, 0.12);
@@ -96,5 +98,35 @@
   }
   .divider {
     border-color: var(--border);
+  }
+  /* Hero headline layered type */
+  .hero-line {
+    @apply block font-black leading-[0.95] tracking-tight;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+  }
+  .hero-white {
+    color: var(--fg);
+  }
+  .hero-blue {
+    color: var(--primary);
+  }
+  .hero-red {
+    color: var(--point);
+  }
+  /* Red accent utilities */
+  .text-point {
+    color: var(--point);
+  }
+  .bg-point {
+    background-color: var(--point);
+  }
+  .border-point {
+    border-color: var(--point);
+  }
+  .chip-point {
+    @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold;
+    color: var(--point);
+    border-color: var(--point);
+    background-color: color-mix(in srgb, var(--point) 10%, transparent);
   }
 }

@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_STATE,
+  exportJson,
+  importJson,
   loadState,
   saveState,
   uid,
@@ -83,12 +85,18 @@ export default function ProgramsPage() {
 
   const categories: (ProgramCategory | "all")[] = [
     "all",
+    "info",
+    "event",
     "branding",
     "landing",
     "lecture",
+    "lecture-mgmt",
+    "student-case",
+    "benchmark",
+    "web-design",
+    "tool-guide",
     "productivity",
     "ai-content",
-    "lecture-mgmt",
     "etc",
   ];
 
@@ -101,17 +109,50 @@ export default function ProgramsPage() {
             제작한 웹페이지 · 프로그램을 누적 기록합니다. ({state.programs.length}개)
           </p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() =>
-            setModal({
-              open: true,
-              editing: { ...EMPTY_PROGRAM, id: uid() },
-            })
-          }
-        >
-          + 새 프로그램
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="btn-ghost cursor-pointer">
+            <input
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                try {
+                  const imported = await importJson(f);
+                  setState(imported);
+                  alert("불러오기 완료!");
+                } catch {
+                  alert("불러오기 실패");
+                }
+              }}
+            />
+            ⬆ 불러오기
+          </label>
+          <button className="btn-ghost" onClick={() => exportJson(state)}>
+            ⬇ 내보내기
+          </button>
+          <a
+            href="https://image-url-dusky.vercel.app/"
+            target="_blank"
+            rel="noreferrer"
+            className="btn border border-[var(--border)] bg-surface text-fg hover:border-[var(--point)] hover:text-[var(--point)]"
+            title="이미지를 업로드해서 URL로 변환하는 도구"
+          >
+            🖼️ 이미지 URL 생성기
+          </a>
+          <button
+            className="btn-primary"
+            onClick={() =>
+              setModal({
+                open: true,
+                editing: { ...EMPTY_PROGRAM, id: uid() },
+              })
+            }
+          >
+            + 새 프로그램
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -156,7 +197,7 @@ export default function ProgramsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filtered.map((p) => (
             <ProgramCard
               key={p.id}
@@ -222,30 +263,30 @@ function ProgramCard({
               {cat.label.slice(0, 2)}
             </div>
           )}
-          <div className="absolute left-3 top-3 rounded-md bg-[rgba(0,0,0,0.6)] px-2 py-1 text-[10px] font-semibold text-white backdrop-blur">
+          <div className="absolute left-2 top-2 rounded-md bg-[rgba(0,0,0,0.6)] px-1.5 py-0.5 text-[9px] font-semibold text-white backdrop-blur">
             {cat.label}
           </div>
           <div
-            className={`absolute right-3 top-3 rounded-md px-2 py-1 text-[10px] font-semibold ${st.color}`}
+            className={`absolute right-2 top-2 rounded-md px-1.5 py-0.5 text-[9px] font-semibold ${st.color}`}
           >
             {st.label}
           </div>
         </div>
-        <div className="p-4">
-          <h3 className="truncate text-base font-semibold">{program.name}</h3>
-          <p className="mt-1 line-clamp-2 text-xs text-muted">
+        <div className="p-3">
+          <h3 className="truncate text-sm font-semibold">{program.name}</h3>
+          <p className="mt-1 line-clamp-2 text-[11px] text-muted">
             {program.description || "설명 없음"}
           </p>
-          <div className="mt-3 flex flex-wrap gap-1">
-            {program.tags.slice(0, 4).map((t) => (
-              <span key={t} className="chip">
+          <div className="mt-2 flex flex-wrap gap-1">
+            {program.tags.slice(0, 3).map((t) => (
+              <span key={t} className="chip !px-1.5 !py-0.5 !text-[10px]">
                 #{t}
               </span>
             ))}
           </div>
         </div>
       </button>
-      <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-2 text-[11px] text-muted">
+      <div className="flex items-center justify-between border-t border-[var(--border)] px-3 py-1.5 text-[10px] text-muted">
         <span>{program.createdAt}</span>
         <button
           className="text-muted hover:text-[var(--primary)] transition"
@@ -272,12 +313,53 @@ function ProgramFormModal({
 }) {
   const [p, setP] = useState<Program>(initial);
   const [tagInput, setTagInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const addTag = () => {
     const t = tagInput.trim();
     if (!t) return;
     if (!p.tags.includes(t)) setP({ ...p, tags: [...p.tags, t] });
     setTagInput("");
+  };
+
+  const requestAISuggest = async () => {
+    if (!p.name.trim()) {
+      setAiError("먼저 프로그램 이름을 입력해주세요.");
+      return;
+    }
+    setAiError(null);
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: p.name,
+          category: p.category,
+          url: p.url,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAiError(data.error || "AI 추천 실패");
+        return;
+      }
+      setP((prev) => {
+        const mergedTags = Array.from(
+          new Set([...prev.tags, ...(data.tags || [])]),
+        );
+        return {
+          ...prev,
+          description: data.description || prev.description,
+          tags: mergedTags,
+        };
+      });
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "네트워크 오류");
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -333,11 +415,34 @@ function ProgramFormModal({
             </div>
           </div>
           <div>
-            <div className="label">설명</div>
+            <div className="mb-1 flex items-center justify-between">
+              <div className="label !mb-0">설명 · 태그</div>
+              <button
+                type="button"
+                onClick={requestAISuggest}
+                disabled={aiLoading}
+                className="inline-flex items-center gap-1 rounded-lg border border-[var(--point)] bg-[color-mix(in_srgb,var(--point)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--point)] transition hover:bg-[color-mix(in_srgb,var(--point)_18%,transparent)] disabled:opacity-50"
+              >
+                {aiLoading ? (
+                  <>
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--point)] border-t-transparent" />
+                    생성 중...
+                  </>
+                ) : (
+                  <>✨ AI 추천받기</>
+                )}
+              </button>
+            </div>
+            {aiError && (
+              <div className="mb-2 rounded-lg border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2 text-xs text-[var(--danger)]">
+                {aiError}
+              </div>
+            )}
             <textarea
               className="input min-h-[80px]"
               value={p.description}
               onChange={(e) => setP({ ...p, description: e.target.value })}
+              placeholder="프로그램에 대한 간단한 설명 · 또는 AI 추천받기 버튼 클릭"
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -362,11 +467,23 @@ function ProgramFormModal({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <div className="label">썸네일 이미지 URL</div>
+              <div className="mb-1 flex items-center justify-between">
+                <div className="label !mb-0">썸네일 이미지 URL</div>
+                <a
+                  href="https://image-url-dusky.vercel.app/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] font-semibold text-[var(--point)] hover:underline"
+                  title="이미지 → URL 변환"
+                >
+                  🖼️ URL 생성기 열기 ↗
+                </a>
+              </div>
               <input
                 className="input"
                 value={p.thumbnail}
                 onChange={(e) => setP({ ...p, thumbnail: e.target.value })}
+                placeholder="https://..."
               />
             </div>
             <div>

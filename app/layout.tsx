@@ -99,6 +99,12 @@ export default function RootLayout({
                   프로그램
                 </Link>
                 <Link
+                  href="/lectures"
+                  className="rounded-lg px-3 py-2 text-muted hover:bg-surface hover:text-fg"
+                >
+                  강의이력
+                </Link>
+                <Link
                   href="/vault"
                   className="rounded-lg px-3 py-2 text-muted hover:bg-surface hover:text-[var(--point)]"
                 >

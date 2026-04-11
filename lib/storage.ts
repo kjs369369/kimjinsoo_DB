@@ -1,5 +1,5 @@
 "use client";
-import { DbState } from "./types";
+import { DbState, Lecture, LECTURE_TYPE_META, LECTURE_STATUS_META } from "./types";
 
 const KEY = "kimjinsoo_db_v1";
 
@@ -30,6 +30,7 @@ export const DEFAULT_STATE: DbState = {
     address: "대한민국",
   },
   programs: [],
+  lectures: [],
 };
 
 export function loadState(): DbState {
@@ -68,4 +69,69 @@ export function exportJson(state: DbState) {
 export async function importJson(file: File): Promise<DbState> {
   const text = await file.text();
   return JSON.parse(text) as DbState;
+}
+
+// ── 강의 이력 내보내기 ──
+
+export function exportLecturesJson(lectures: Lecture[]) {
+  download(
+    JSON.stringify(lectures, null, 2),
+    `lectures-${todayStr()}.json`,
+    "application/json",
+  );
+}
+
+export function exportLecturesCsv(lectures: Lecture[]) {
+  const header = "날짜,종료일,기관,제목,유형,시수,담당자,이메일,전화,교육과정,상태,강의료,태그,메모";
+  const rows = lectures.map((l) =>
+    [
+      l.date, l.endDate, q(l.organization), q(l.title),
+      LECTURE_TYPE_META[l.lectureType]?.label ?? l.lectureType,
+      l.hours, q(l.contactPerson), l.contactEmail, l.contactPhone,
+      q(l.curriculum),
+      LECTURE_STATUS_META[l.status]?.label ?? l.status,
+      q(l.fee), q(l.tags.join(";")), q(l.description),
+    ].join(","),
+  );
+  const bom = "\uFEFF";
+  download(bom + [header, ...rows].join("\n"), `lectures-${todayStr()}.csv`, "text/csv");
+}
+
+export function exportLecturesText(lectures: Lecture[]) {
+  const lines = lectures.map((l, i) => {
+    const type = LECTURE_TYPE_META[l.lectureType]?.label ?? l.lectureType;
+    const status = LECTURE_STATUS_META[l.status]?.label ?? l.status;
+    return [
+      `[${i + 1}] ${l.title}`,
+      `    기관: ${l.organization}`,
+      `    날짜: ${l.date}${l.endDate ? " ~ " + l.endDate : ""} (${type})`,
+      `    시수: ${l.hours}시간  |  상태: ${status}${l.fee ? "  |  강의료: " + l.fee : ""}`,
+      l.curriculum ? `    교육과정: ${l.curriculum}` : "",
+      l.contactPerson ? `    담당자: ${l.contactPerson} / ${l.contactEmail} / ${l.contactPhone}` : "",
+      l.tags.length ? `    태그: ${l.tags.join(", ")}` : "",
+      l.description ? `    메모: ${l.description}` : "",
+      l.attachments.length
+        ? `    첨부(${l.attachments.length}): ${l.attachments.map((a) => a.name).join(", ")}`
+        : "",
+      "",
+    ].filter(Boolean).join("\n");
+  });
+  const header = `=== 강의 출강 기록부 ===\n총 ${lectures.length}건 · 총 ${lectures.reduce((s, l) => s + (l.hours || 0), 0)}시간\n생성일: ${todayStr()}\n${"=".repeat(40)}\n\n`;
+  download(header + lines.join("\n"), `lectures-${todayStr()}.txt`, "text/plain");
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+function q(s: string) {
+  return `"${(s ?? "").replace(/"/g, '""')}"`;
+}
+function download(content: string, filename: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }

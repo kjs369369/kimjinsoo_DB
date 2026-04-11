@@ -59,6 +59,40 @@ export type Program = {
   note: string;
 };
 
+// ── 강의 이력 ──
+export type LectureType = "offline" | "online" | "hybrid";
+export type LectureStatus = "completed" | "scheduled" | "cancelled";
+export type AttachmentType = "email" | "document" | "link" | "image" | "etc";
+
+export type LectureAttachment = {
+  id: string;
+  name: string;
+  type: AttachmentType;
+  url: string;
+  memo: string;
+  addedAt: string;
+};
+
+export type Lecture = {
+  id: string;
+  title: string;
+  organization: string;
+  contactPerson: string;
+  contactEmail: string;
+  contactPhone: string;
+  lectureType: LectureType;
+  date: string;
+  endDate: string;
+  hours: number;
+  curriculum: string;
+  description: string;
+  attachments: LectureAttachment[];
+  status: LectureStatus;
+  tags: string[];
+  fee: string;
+  createdAt: string;
+};
+
 export type DbState = {
   profile: Profile;
   websites: LinkItem[];
@@ -67,6 +101,7 @@ export type DbState = {
   partners: LinkItem[];
   footer: FooterInfo;
   programs: Program[];
+  lectures: Lecture[];
 };
 
 export const CATEGORY_META: Record<
@@ -95,4 +130,33 @@ export const STATUS_META: Record<
   public: { label: "공개", color: "bg-emerald-500/20 text-emerald-300" },
   private: { label: "비공개", color: "bg-slate-500/20 text-slate-300" },
   wip: { label: "작업중", color: "bg-amber-500/20 text-amber-300" },
+};
+
+export const LECTURE_TYPE_META: Record<
+  LectureType,
+  { label: string; icon: string }
+> = {
+  offline: { label: "오프라인", icon: "🏫" },
+  online: { label: "온라인", icon: "💻" },
+  hybrid: { label: "하이브리드", icon: "🔀" },
+};
+
+export const LECTURE_STATUS_META: Record<
+  LectureStatus,
+  { label: string; color: string }
+> = {
+  completed: { label: "완료", color: "bg-emerald-500/20 text-emerald-300" },
+  scheduled: { label: "예정", color: "bg-sky-500/20 text-sky-300" },
+  cancelled: { label: "취소", color: "bg-red-500/20 text-red-300" },
+};
+
+export const ATTACHMENT_TYPE_META: Record<
+  AttachmentType,
+  { label: string; icon: string }
+> = {
+  email: { label: "이메일", icon: "📧" },
+  document: { label: "문서", icon: "📄" },
+  link: { label: "링크", icon: "🔗" },
+  image: { label: "이미지", icon: "🖼️" },
+  etc: { label: "기타", icon: "📎" },
 };

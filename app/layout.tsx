@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
+import AdminAuth from "@/components/AdminAuth";
 
 const SITE_URL = "https://kimjinsoo-db.vercel.app";
 const OG_IMAGE = "https://image-url-dusky.vercel.app/s/04b31289";
@@ -66,24 +67,26 @@ export default function RootLayout({
           style={{ borderColor: "var(--border)" }}
         >
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link href="/" className="group flex items-center gap-3">
-              <div
-                className="grid h-9 w-9 place-items-center rounded-xl text-sm font-bold text-white"
-                style={{
-                  background: "linear-gradient(135deg, var(--primary), var(--accent))",
-                }}
-              >
-                KJS
-              </div>
-              <div>
-                <div className="text-sm font-semibold tracking-wide">
-                  kimjinsoo_DB
+            <AdminAuth>
+              <Link href="/" className="group flex items-center gap-3">
+                <div
+                  className="grid h-9 w-9 place-items-center rounded-xl text-sm font-bold text-white"
+                  style={{
+                    background: "linear-gradient(135deg, var(--primary), var(--accent))",
+                  }}
+                >
+                  KJS
                 </div>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-muted">
-                  personal dashboard
+                <div>
+                  <div className="text-sm font-semibold tracking-wide">
+                    kimjinsoo_DB
+                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted">
+                    personal dashboard
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </AdminAuth>
             <div className="flex items-center gap-3">
               <nav className="hidden items-center gap-1 text-sm sm:flex">
                 <Link

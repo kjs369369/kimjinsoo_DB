@@ -5,7 +5,6 @@ import ThemeToggle from "@/components/ThemeToggle";
 import AdminAuth from "@/components/AdminAuth";
 
 const SITE_URL = "https://kimjinsoo-db.vercel.app";
-const OG_IMAGE = "https://image-url-dusky.vercel.app/s/04b31289";
 const SITE_TITLE = "Kimjinsoo · Official Hub";
 const SITE_DESC =
   "김진수 (AICLab 대표) 브랜딩 · 공식 링크 · 프로그램 아카이브 · 개인 대시보드";
@@ -21,28 +20,11 @@ export const metadata: Metadata = {
     siteName: "kimjinsoo_DB",
     title: SITE_TITLE,
     description: SITE_DESC,
-    images: [
-      {
-        url: OG_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: SITE_TITLE,
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESC,
-    images: [OG_IMAGE],
-  },
-  other: {
-    // KakaoTalk이 참조하는 추가 태그
-    "og:image": OG_IMAGE,
-    "og:image:secure_url": OG_IMAGE,
-    "og:image:type": "image/png",
-    "og:image:width": "1200",
-    "og:image:height": "630",
   },
 };
 

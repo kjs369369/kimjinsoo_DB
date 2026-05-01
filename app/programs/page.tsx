@@ -5,9 +5,13 @@ import {
   exportJson,
   importJson,
   loadState,
-  saveState,
+  saveStateWithSync,
+  fetchFromCloud,
+  readLocalUpdatedAt,
+  writeLocalUpdatedAt,
   uid,
 } from "@/lib/storage";
+import { createProgram, updateProgram, deleteProgram } from "@/lib/db-client";
 import {
   CATEGORY_META,
   DbState,
@@ -43,10 +47,21 @@ export default function ProgramsPage() {
   useEffect(() => {
     setState(loadState());
     setMounted(true);
+    fetchFromCloud().then((cloud) => {
+      if (!cloud) return;
+      const localTs = readLocalUpdatedAt();
+      if (cloud.updatedAt > localTs) {
+        setState(cloud.state);
+        writeLocalUpdatedAt(cloud.updatedAt);
+      } else {
+        // state-level은 local이 최신이지만 programs/lectures 는 항상 클라우드 신뢰
+        setState((s) => ({ ...s, programs: cloud.state.programs, lectures: cloud.state.lectures }));
+      }
+    });
   }, []);
 
   useEffect(() => {
-    if (mounted) saveState(state);
+    if (mounted) saveStateWithSync(state);
   }, [state, mounted]);
 
   const filtered = useMemo(() => {
@@ -65,20 +80,25 @@ export default function ProgramsPage() {
     });
   }, [state.programs, filter, query]);
 
-  const save = (p: Program) => {
+  const save = async (p: Program) => {
+    const isUpdate = state.programs.some((x) => x.id === p.id);
     setState((s) => ({
       ...s,
-      programs: s.programs.some((x) => x.id === p.id)
+      programs: isUpdate
         ? s.programs.map((x) => (x.id === p.id ? p : x))
         : [p, ...s.programs],
     }));
     setModal({ open: false, editing: null });
+    const result = isUpdate ? await updateProgram(p) : await createProgram(p);
+    if (!result) console.error("[programs] 클라우드 저장 실패 — 로컬에는 반영됨");
   };
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
     if (!confirm("삭제하시겠습니까?")) return;
     setState((s) => ({ ...s, programs: s.programs.filter((x) => x.id !== id) }));
     setView(null);
+    const ok = await deleteProgram(id);
+    if (!ok) console.error("[programs] 클라우드 삭제 실패 — 로컬에는 반영됨");
   };
 
   if (!mounted) return null;

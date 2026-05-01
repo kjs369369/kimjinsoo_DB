@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { issueAdminToken } from "@/lib/admin-token";
 
 export const runtime = "nodejs";
 
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       isDefault: !process.env.VAULT_PASSWORD,
+      token: issueAdminToken(),
     });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });

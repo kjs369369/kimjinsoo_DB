@@ -1,7 +1,9 @@
 "use client";
-import { DbState, Lecture, LECTURE_TYPE_META, LECTURE_STATUS_META } from "./types";
+import { DbState, Lecture, Program, LECTURE_TYPE_META, LECTURE_STATUS_META } from "./types";
 
 const KEY = "kimjinsoo_db_v1";
+const META_KEY = "kimjinsoo_db_meta_v1";
+const ADMIN_TOKEN_KEY = "kimjinsoo_admin_token_v1";
 
 export const DEFAULT_STATE: DbState = {
   profile: {
@@ -134,4 +136,129 @@ function download(content: string, filename: string, mime: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ─────────────────────────────────────────────
+// Supabase 동기화 — 오프라인 캐시 + 클라우드 머지
+// ─────────────────────────────────────────────
+
+type StateWithTs = DbState & { _updatedAt?: number };
+
+export function readLocalUpdatedAt(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (!raw) return 0;
+    const m = JSON.parse(raw) as { updatedAt?: number };
+    return Number(m.updatedAt) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function writeLocalUpdatedAt(ts: number) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(META_KEY, JSON.stringify({ updatedAt: ts }));
+}
+
+/**
+ * local 과 cloud 두 상태를 timestamp 기준 last-write-wins 방식으로 머지.
+ * 단일 사용자 가정 — 동시 편집 충돌은 무시한다.
+ */
+export function mergeStates(
+  local: StateWithTs | null,
+  cloud: StateWithTs | null,
+): StateWithTs {
+  if (!local && !cloud) return { ...DEFAULT_STATE, _updatedAt: 0 };
+  if (!cloud) {
+    return { ...DEFAULT_STATE, ...local!, _updatedAt: local!._updatedAt ?? 0 };
+  }
+  if (!local) {
+    return { ...DEFAULT_STATE, ...cloud, _updatedAt: cloud._updatedAt ?? 0 };
+  }
+  const localTs = local._updatedAt ?? 0;
+  const cloudTs = cloud._updatedAt ?? 0;
+  return cloudTs > localTs
+    ? { ...DEFAULT_STATE, ...cloud, _updatedAt: cloudTs }
+    : { ...DEFAULT_STATE, ...local, _updatedAt: localTs };
+}
+
+function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+type CloudFetchResult = {
+  state: DbState;
+  updatedAt: number;
+};
+
+/** Supabase에서 통합 상태(state + programs + lectures)를 한 번에 가져옴. */
+export async function fetchFromCloud(): Promise<CloudFetchResult | null> {
+  try {
+    const [stateRes, programsRes, lecturesRes] = await Promise.all([
+      fetch("/api/db/state", { cache: "no-store" }),
+      fetch("/api/db/programs", { cache: "no-store" }),
+      fetch("/api/db/lectures", { cache: "no-store" }),
+    ]);
+    if (!stateRes.ok || !programsRes.ok || !lecturesRes.ok) return null;
+    const stateJson = await stateRes.json();
+    const programsJson = await programsRes.json();
+    const lecturesJson = await lecturesRes.json();
+    if (!stateJson.ok || !programsJson.ok || !lecturesJson.ok) return null;
+    const s = stateJson.data;
+    const state: DbState = {
+      profile: s.profile && Object.keys(s.profile).length ? s.profile : DEFAULT_STATE.profile,
+      websites: Array.isArray(s.websites) && s.websites.length ? s.websites : DEFAULT_STATE.websites,
+      socials: Array.isArray(s.socials) && s.socials.length ? s.socials : DEFAULT_STATE.socials,
+      workLinks: Array.isArray(s.work_links) ? s.work_links : [],
+      partners: Array.isArray(s.partners) ? s.partners : [],
+      footer: s.footer && Object.keys(s.footer).length ? s.footer : DEFAULT_STATE.footer,
+      programs: (programsJson.data || []) as Program[],
+      lectures: (lecturesJson.data || []) as Lecture[],
+    };
+    return {
+      state,
+      updatedAt: new Date(s.updated_at).getTime(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** 로컬 state 를 Supabase 에 PUT (programs/lectures 제외 — 별도 API). */
+export async function pushStateToCloud(state: DbState): Promise<boolean> {
+  const token = getAdminToken();
+  if (!token) return false;
+  try {
+    const res = await fetch("/api/db/state", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        profile: state.profile,
+        websites: state.websites,
+        socials: state.socials,
+        work_links: state.workLinks,
+        partners: state.partners,
+        footer: state.footer,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** localStorage 즉시 저장 + debounced (1.5초) Supabase 푸시. */
+let pushTimer: ReturnType<typeof setTimeout> | null = null;
+export function saveStateWithSync(state: DbState) {
+  saveState(state);
+  writeLocalUpdatedAt(Date.now());
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    pushStateToCloud(state).catch((err) => console.error("[sync] push 실패:", err));
+  }, 1500);
 }

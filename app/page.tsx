@@ -5,7 +5,10 @@ import {
   exportJson,
   importJson,
   loadState,
-  saveState,
+  saveStateWithSync,
+  fetchFromCloud,
+  readLocalUpdatedAt,
+  writeLocalUpdatedAt,
   uid,
 } from "@/lib/storage";
 import { DbState, LinkItem, SocialItem } from "@/lib/types";
@@ -36,10 +39,19 @@ export default function MainPage() {
   useEffect(() => {
     setState(loadState());
     setMounted(true);
+    // 클라우드에서 최신 데이터 가져와 머지 (다른 PC의 변경 반영)
+    fetchFromCloud().then((cloud) => {
+      if (!cloud) return;
+      const localTs = readLocalUpdatedAt();
+      if (cloud.updatedAt > localTs) {
+        setState(cloud.state);
+        writeLocalUpdatedAt(cloud.updatedAt);
+      }
+    });
   }, []);
 
   useEffect(() => {
-    if (mounted) saveState(state);
+    if (mounted) saveStateWithSync(state);
   }, [state, mounted]);
 
   const update = (patch: Partial<DbState>) =>

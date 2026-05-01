@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
 const ADMIN_AUTH_KEY = "kimjinsoo_admin_auth_v1";
+const ADMIN_TOKEN_KEY = "kimjinsoo_admin_token_v1";
 const CLICK_THRESHOLD = 3;
 const CLICK_WINDOW_MS = 2000;
 
@@ -11,6 +12,11 @@ export function useAdminGate() {
   return typeof window !== "undefined"
     ? sessionStorage.getItem(ADMIN_AUTH_KEY) === "1"
     : false;
+}
+
+export function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(ADMIN_TOKEN_KEY);
 }
 
 export default function AdminAuth({ children }: { children: React.ReactNode }) {
@@ -57,6 +63,7 @@ export default function AdminAuth({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (data.ok) {
         sessionStorage.setItem(ADMIN_AUTH_KEY, "1");
+        if (data.token) sessionStorage.setItem(ADMIN_TOKEN_KEY, data.token);
         setShowModal(false);
         router.push("/admin");
       } else {

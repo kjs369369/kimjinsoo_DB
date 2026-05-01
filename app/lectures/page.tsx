@@ -2,13 +2,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   loadState,
-  saveState,
+  saveStateWithSync,
+  fetchFromCloud,
+  readLocalUpdatedAt,
+  writeLocalUpdatedAt,
   uid,
   exportLecturesJson,
   exportLecturesCsv,
   exportLecturesText,
   DEFAULT_STATE,
 } from "@/lib/storage";
+import { createLecture, updateLecture, deleteLecture } from "@/lib/db-client";
 import {
   DbState,
   Lecture,
@@ -56,8 +60,21 @@ export default function LecturesPage() {
   const [editing, setEditing] = useState<Lecture | null>(null);
   const [viewLecture, setViewLecture] = useState<Lecture | null>(null);
 
-  useEffect(() => { setState(loadState()); setMounted(true); }, []);
-  useEffect(() => { if (mounted) saveState(state); }, [state, mounted]);
+  useEffect(() => {
+    setState(loadState());
+    setMounted(true);
+    fetchFromCloud().then((cloud) => {
+      if (!cloud) return;
+      const localTs = readLocalUpdatedAt();
+      if (cloud.updatedAt > localTs) {
+        setState(cloud.state);
+        writeLocalUpdatedAt(cloud.updatedAt);
+      } else {
+        setState((s) => ({ ...s, programs: cloud.state.programs, lectures: cloud.state.lectures }));
+      }
+    });
+  }, []);
+  useEffect(() => { if (mounted) saveStateWithSync(state); }, [state, mounted]);
 
   // 교육과정 목록 자동 수집
   const curricula = useMemo(() => {
@@ -97,17 +114,22 @@ export default function LecturesPage() {
   ).length;
 
   // CRUD
-  const saveLecture = (l: Lecture) => {
+  const saveLecture = async (l: Lecture) => {
+    const isUpdate = state.lectures.some((x) => x.id === l.id);
     setState((s) => ({
       ...s,
-      lectures: s.lectures.some((x) => x.id === l.id)
+      lectures: isUpdate
         ? s.lectures.map((x) => (x.id === l.id ? l : x))
         : [l, ...s.lectures],
     }));
+    const ok = isUpdate ? await updateLecture(l) : await createLecture(l);
+    if (!ok) console.error("[lectures] 클라우드 저장 실패 — 로컬에는 반영됨");
   };
-  const removeLecture = (id: string) => {
+  const removeLecture = async (id: string) => {
     if (!confirm("이 강의 이력을 삭제하시겠습니까?")) return;
     setState((s) => ({ ...s, lectures: s.lectures.filter((x) => x.id !== id) }));
+    const ok = await deleteLecture(id);
+    if (!ok) console.error("[lectures] 클라우드 삭제 실패 — 로컬에는 반영됨");
   };
 
   if (!mounted) return null;

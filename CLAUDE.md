@@ -14,7 +14,7 @@
 ## 기술 스택
 - **프레임워크**: Next.js 14 (App Router) + TypeScript
 - **스타일**: Tailwind CSS 3.4 + CSS 변수 기반 테마 시스템
-- **데이터 저장**: 브라우저 `localStorage` (키: `kimjinsoo_db_v1`)
+- **데이터 저장**: Supabase Postgres + 브라우저 `localStorage` 1차 캐시 (debounced sync, 키: `kimjinsoo_db_v1`)
 - **폰트**: Pretendard (시스템 폴백)
 - **배포**: Vercel (CLI 직배포 — GitHub Integration 미연결 상태)
 - **패키지 매니저**: npm
@@ -33,7 +33,15 @@ kimjinsoo_DB/
 │   └── ThemeToggle.tsx     ← 다크/라이트 토글 (localStorage 연동)
 ├── lib/
 │   ├── types.ts            ← AppState, Program, Website 등 타입
-│   └── storage.ts          ← loadState, saveState, 기본값 관리
+│   ├── storage.ts          ← localStorage 캐시 + Supabase debounced sync
+│   ├── supabase-browser.ts ← anon 키 (read-only) 클라이언트
+│   ├── supabase-server.ts  ← service_role 키 (서버 전용)
+│   ├── db-client.ts        ← /api/db/* 호출 래퍼
+│   ├── db-mappers.ts       ← snake_case ↔ camelCase 변환
+│   ├── admin-token.ts      ← HMAC 토큰 발급/검증
+│   └── migrate-to-cloud.ts ← localStorage → Supabase 일회성 이주
+├── supabase/
+│   └── migrations/0001_initial.sql  ← state/programs/lectures/lecture_attachments + RLS
 ├── tailwind.config.ts      ← 커스텀 컬러 (bg, surface, primary, accent…)
 ├── next.config.mjs
 ├── tsconfig.json
@@ -126,14 +134,18 @@ npx vercel --prod --yes
 - **페이지 추가**: `app/<name>/page.tsx` 생성 + `app/layout.tsx`의 네비게이션에 링크 추가
 
 ## 주의사항 ⚠️
-- **localStorage 한계**: 기기·브라우저별 독립 저장 → 멀티기기 동기화 안 됨. 필요 시 Supabase 마이그레이션 고려
+- **데이터 저장소**: 2026-05-02 Supabase로 전환 완료. 모든 변경사항은 localStorage에 즉시 + Supabase로 debounced sync
+- **환경변수 (Vercel)**: `VAULT_PASSWORD`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` 4개 필수. Supabase 키는 한 줄짜리 JWT — UI 붙여넣기 시 줄바꿈 주의
+- **인증**: `VAULT_PASSWORD`로 토큰 발급(24h TTL, HMAC-SHA256). 모든 `/api/db/*` 쓰기 요청은 `Authorization: Bearer <token>` 필요
 - **파비콘 캐시**: 변경 후 브라우저 강력 새로고침(Ctrl+Shift+R) 필요
 - **Vercel 배포**: CLI 직배포 중 → GitHub Integration 연결하면 push만으로 자동 배포 가능
-- **데이터 백업**: 중요한 링크·프로그램 쌓이면 주기적으로 JSON 내보내기 권장
+- **데이터 백업**: localStorage 캐시 외에 주기적 JSON 내보내기 권장 (Supabase 무료 플랜 한도 대비)
 
 ## 다음 확장 아이디어
-- [ ] Supabase 연동 → 멀티기기 동기화
+- [x] Supabase 연동 → 멀티기기 동기화 (2026-05-02 완료)
 - [ ] Google OAuth 로그인 (본인 인증 후 편집 모드 허용)
+- [ ] Supabase Realtime 구독 (다른 기기 변경 즉시 반영)
+- [ ] 강의 통계 페이지 (월별/유형별 시수·강의료 SQL group by)
 - [ ] 프로그램 카드 드래그앤드롭 정렬
 - [ ] 통계 대시보드 (프로그램 수, 카테고리별 분포)
 - [ ] OG 이미지 자동 생성 (Next.js `opengraph-image.tsx`)

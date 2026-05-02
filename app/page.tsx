@@ -37,17 +37,23 @@ export default function MainPage() {
   });
 
   useEffect(() => {
-    setState(loadState());
-    setMounted(true);
-    // 클라우드에서 최신 데이터 가져와 머지 (다른 PC의 변경 반영)
+    let cancelled = false;
+    setState(loadState()); // UX: 즉시 local 표시 (깜빡임 방지)
+    // mounted=true 는 fetch 완료 후 — 빈 local 이 cloud 를 덮어쓰는 사이클 차단
     fetchFromCloud().then((cloud) => {
-      if (!cloud) return;
-      const localTs = readLocalUpdatedAt();
-      if (cloud.updatedAt > localTs) {
-        setState(cloud.state);
-        writeLocalUpdatedAt(cloud.updatedAt);
+      if (cancelled) return;
+      if (cloud && !cloud.isEmpty) {
+        const localTs = readLocalUpdatedAt();
+        if (cloud.updatedAt > localTs) {
+          setState(cloud.state);
+          writeLocalUpdatedAt(cloud.updatedAt);
+        }
       }
+      setMounted(true);
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

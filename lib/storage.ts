@@ -191,6 +191,7 @@ function getAdminToken(): string | null {
 type CloudFetchResult = {
   state: DbState;
   updatedAt: number;
+  isEmpty: boolean;
 };
 
 /** Supabase에서 통합 상태(state + programs + lectures)를 한 번에 가져옴. */
@@ -207,6 +208,14 @@ export async function fetchFromCloud(): Promise<CloudFetchResult | null> {
     const lecturesJson = await lecturesRes.json();
     if (!stateJson.ok || !programsJson.ok || !lecturesJson.ok) return null;
     const s = stateJson.data;
+    const programsArr = (programsJson.data || []) as Program[];
+    const lecturesArr = (lecturesJson.data || []) as Lecture[];
+    const isEmpty =
+      (!s.profile || Object.keys(s.profile).length === 0) &&
+      (!Array.isArray(s.websites) || s.websites.length === 0) &&
+      (!Array.isArray(s.socials) || s.socials.length === 0) &&
+      programsArr.length === 0 &&
+      lecturesArr.length === 0;
     const state: DbState = {
       profile: s.profile && Object.keys(s.profile).length ? s.profile : DEFAULT_STATE.profile,
       websites: Array.isArray(s.websites) && s.websites.length ? s.websites : DEFAULT_STATE.websites,
@@ -214,12 +223,13 @@ export async function fetchFromCloud(): Promise<CloudFetchResult | null> {
       workLinks: Array.isArray(s.work_links) ? s.work_links : [],
       partners: Array.isArray(s.partners) ? s.partners : [],
       footer: s.footer && Object.keys(s.footer).length ? s.footer : DEFAULT_STATE.footer,
-      programs: (programsJson.data || []) as Program[],
-      lectures: (lecturesJson.data || []) as Lecture[],
+      programs: programsArr,
+      lectures: lecturesArr,
     };
     return {
       state,
       updatedAt: new Date(s.updated_at).getTime(),
+      isEmpty,
     };
   } catch {
     return null;

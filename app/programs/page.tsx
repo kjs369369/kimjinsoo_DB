@@ -45,19 +45,29 @@ export default function ProgramsPage() {
   const [view, setView] = useState<Program | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     setState(loadState());
-    setMounted(true);
     fetchFromCloud().then((cloud) => {
-      if (!cloud) return;
-      const localTs = readLocalUpdatedAt();
-      if (cloud.updatedAt > localTs) {
-        setState(cloud.state);
-        writeLocalUpdatedAt(cloud.updatedAt);
-      } else {
-        // state-level은 local이 최신이지만 programs/lectures 는 항상 클라우드 신뢰
-        setState((s) => ({ ...s, programs: cloud.state.programs, lectures: cloud.state.lectures }));
+      if (cancelled) return;
+      if (cloud && !cloud.isEmpty) {
+        const localTs = readLocalUpdatedAt();
+        if (cloud.updatedAt > localTs) {
+          setState(cloud.state);
+          writeLocalUpdatedAt(cloud.updatedAt);
+        } else {
+          // state-level은 local이 최신이지만 programs/lectures 는 항상 클라우드 신뢰
+          setState((s) => ({
+            ...s,
+            programs: cloud.state.programs,
+            lectures: cloud.state.lectures,
+          }));
+        }
       }
+      setMounted(true);
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

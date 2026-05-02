@@ -61,18 +61,28 @@ export default function LecturesPage() {
   const [viewLecture, setViewLecture] = useState<Lecture | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     setState(loadState());
-    setMounted(true);
     fetchFromCloud().then((cloud) => {
-      if (!cloud) return;
-      const localTs = readLocalUpdatedAt();
-      if (cloud.updatedAt > localTs) {
-        setState(cloud.state);
-        writeLocalUpdatedAt(cloud.updatedAt);
-      } else {
-        setState((s) => ({ ...s, programs: cloud.state.programs, lectures: cloud.state.lectures }));
+      if (cancelled) return;
+      if (cloud && !cloud.isEmpty) {
+        const localTs = readLocalUpdatedAt();
+        if (cloud.updatedAt > localTs) {
+          setState(cloud.state);
+          writeLocalUpdatedAt(cloud.updatedAt);
+        } else {
+          setState((s) => ({
+            ...s,
+            programs: cloud.state.programs,
+            lectures: cloud.state.lectures,
+          }));
+        }
       }
+      setMounted(true);
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
   useEffect(() => { if (mounted) saveStateWithSync(state); }, [state, mounted]);
 

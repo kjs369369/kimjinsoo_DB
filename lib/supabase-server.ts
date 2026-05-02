@@ -15,6 +15,12 @@ export function getSupabaseAdmin(): SupabaseClient {
   if (cached) return cached;
   cached = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      // Next.js 14 의 fetch 데이터 캐시가 라우트 핸들러 내부 supabase 호출에도
+      // 적용되어 stale 데이터를 반환한다. no-store 로 강제 비활성화.
+      fetch: (input, init) =>
+        fetch(input as RequestInfo, { ...(init || {}), cache: "no-store" }),
+    },
   });
   return cached;
 }
